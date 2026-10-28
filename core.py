@@ -313,6 +313,36 @@ ANALYSES = OrderedDict({
             GROUP BY src_ip ORDER BY syn_packets DESC
         """,
     },
+    "Port-scan detector (ports per source)": {
+    "explanation": "Different destination ports each source tried to connect "
+                   "to (SYN only). A high count is the classic port-scan "
+                   "signature: one host knocking on many doors.",
+    "headers": ["src_ip", "distinct_ports_targeted", "syn_attempts"],
+    "sql": """
+        SELECT src_ip,
+               COUNT(DISTINCT dst_port) AS distinct_ports_targeted,
+               COUNT(*)                 AS syn_attempts
+        FROM packets
+        WHERE protocol='TCP' AND tcp_flags='S'
+        GROUP BY src_ip
+        ORDER BY distinct_ports_targeted DESC
+    """,
+},
+"Host-sweep detector (hosts per source)": {
+    "explanation": "Different destination hosts each source tried to connect "
+                   "to (SYN only). One source contacting many hosts is the "
+                   "signature of a network sweep or worm.",
+    "headers": ["src_ip", "distinct_hosts_contacted", "syn_attempts"],
+    "sql": """
+        SELECT src_ip,
+               COUNT(DISTINCT dst_ip) AS distinct_hosts_contacted,
+               COUNT(*)               AS syn_attempts
+        FROM packets
+        WHERE protocol='TCP' AND tcp_flags='S'
+        GROUP BY src_ip
+        ORDER BY distinct_hosts_contacted DESC
+    """,
+},
 })
 
 
